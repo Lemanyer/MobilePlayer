@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     >
     <!--标题栏-->
-
+    <include layout="@layout/titlebar"/>
 
 
     <!--FrameLayput-->
@@ -21,6 +21,7 @@
     <!--RadioGroup-->
 
     <RadioGroup
+        android:id="@+id/rg_bottom_tag"
         android:padding="3dp"
         android:background="#11000000"
         android:orientation="horizontal"
