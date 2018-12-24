@@ -3,14 +3,9 @@ package com.tcl.mobileplayer.activity;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RadioGroup;
 
@@ -67,6 +62,7 @@ public class MainActivity extends FragmentActivity {
                     position = 3;
                     break;
                 default:
+                    VideoPager.isGrantExternalRW(MainActivity.this);
                     position = 0;
                     break;
             }
@@ -96,13 +92,12 @@ public class MainActivity extends FragmentActivity {
      */
     private BasePager getBasePager() {
         BasePager basePager = basePagers.get(position);
-        if (basePager!=null&&basePager.isInitData==false){
+        if (basePager != null && !basePager.isInitData){
             basePager.initData();
             basePager.isInitData=true;
         }
         return basePager;
     }
-
 
 
 }
