@@ -4,36 +4,39 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.view.Gravity;
 import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.tcl.mobileplayer.R;
+import com.tcl.mobileplayer.activity.SystemVideoPlayer;
+import com.tcl.mobileplayer.adapter.VideoPagerAdapter;
 import com.tcl.mobileplayer.base.BasePager;
 import com.tcl.mobileplayer.domain.MediaItem;
 import com.tcl.mobileplayer.utils.LogUtil;
-
-import java.net.URI;
 import java.util.ArrayList;
 
-public class VideoPager extends BasePager {
+public class VideoPager extends BasePager  {
     private ListView listView;
     private TextView tv_nomedia;
     private ProgressBar pb_loading;
 
+    private VideoPagerAdapter videoPagerAdapter;
 
     private ArrayList<MediaItem> mediaItems;
-
 
     public VideoPager(Context context) {
         super(context);
@@ -47,23 +50,50 @@ public class VideoPager extends BasePager {
                 //有数据
                 //设施适配器
                 //文本隐藏
-
+                videoPagerAdapter = new VideoPagerAdapter(context,mediaItems);
+                listView.setAdapter(videoPagerAdapter);
+                tv_nomedia.setVisibility(View.GONE);
             }else {
                 //没有数据
                 //文本显示
+                tv_nomedia.setVisibility(View.VISIBLE);
             }
+            pb_loading.setVisibility(View.GONE);
         }
     };
 
 
     @Override
     public View initView() {
-
         View view = View.inflate(context, R.layout.video_pager,null);
         listView = view.findViewById(R.id.listview);
         tv_nomedia = view.findViewById(R.id.tv_nomedia);
         pb_loading = view.findViewById(R.id.pb_loading);
+
+        //设置ListView的Item的点击事件
+        listView.setOnItemClickListener(new MyOnItemClickListener());
         return view;
+    }
+
+    class MyOnItemClickListener implements AdapterView.OnItemClickListener{
+
+
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+            MediaItem mediaItem = mediaItems.get(position);
+            Toast.makeText(context,mediaItem.toString(),Toast.LENGTH_SHORT).show();
+            //1.调起系统所有的播放
+//            Intent intent = new Intent();
+//            intent.setDataAndType(Uri.parse(mediaItem.getData()),"video/*");
+//            context.startActivity(intent);
+
+            //2.调用自己写的播放器
+
+            Intent intent = new Intent(context,SystemVideoPlayer.class);
+            intent.setDataAndType(Uri.parse(mediaItem.getData()),"video/*");
+            context.startActivity(intent);
+
+        }
     }
 
 
@@ -86,6 +116,7 @@ public class VideoPager extends BasePager {
         LogUtil.e("本地视频初始化");
         super.initData();
         //加载本地视频数据
+        getDataFromLocal();
     }
 
 
@@ -99,8 +130,9 @@ public class VideoPager extends BasePager {
         new Thread(){
             @Override
             public void run() {
-                mediaItems = new ArrayList<>();
                 super.run();
+                mediaItems = new ArrayList<>();
+                SystemClock.sleep(1000);
                 ContentResolver resolver = context.getContentResolver();
                 Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
                 LogUtil.e(uri.toString());
@@ -117,9 +149,9 @@ public class VideoPager extends BasePager {
                     while (cursor.moveToNext()){
                         LogUtil.e("in");
                         MediaItem mediaItem = new MediaItem();
-                        mediaItems.add(mediaItem);
 
                         String name = cursor.getString(0);
+                        LogUtil.e(name);
                         mediaItem.setName(name);
                         long duration = cursor.getLong(1);
                         mediaItem.setDuration(duration);
@@ -129,11 +161,12 @@ public class VideoPager extends BasePager {
                         mediaItem.setData(data);
                         String artist = cursor.getString(4);
                         mediaItem.setArtist(artist);
-
+                        mediaItems.add(mediaItem);
 
                     }
                     cursor.close();
                 }
+
                 //发消息
                 handler.sendEmptyMessage(10);
             }
@@ -141,6 +174,20 @@ public class VideoPager extends BasePager {
     }
 
 
+    //寻找视频存放的地址
+    public void getPath(){
+        ContentResolver resolver = context.getContentResolver();
+        String myImageUrl = "content://media/external/video/media";
+        Uri uri = Uri.parse(myImageUrl);
+
+
+        String[] proj = { MediaStore.Video.Media.DATA };
+        Cursor actualimagecursor = resolver.query(uri,proj,null,null,null);
+        int actual_image_column_index = actualimagecursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        actualimagecursor.moveToFirst();
+        String img_path = actualimagecursor.getString(actual_image_column_index);
+        LogUtil.e(img_path);
+    }
 
 
 }
