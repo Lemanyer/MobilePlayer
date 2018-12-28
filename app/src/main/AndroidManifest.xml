@@ -22,6 +22,8 @@
 
         <activity android:name=".activity.MainActivity" android:launchMode="singleTask"/>
         <activity android:name=".activity.SystemVideoPlayer"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="keyboardHidden|screenSize|orientation"
             />
     </application>
